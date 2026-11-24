@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="google" content="notranslate">
+<title>MOVING Pacientes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --bg:#F3F6F3; --surface:#FFFFFF; --surface2:#EBF1EC; --fg:#13221A; --muted:#58695F; --line:#D5DFD7;
+  --accent:#1E9A52; --accent-ink:#FFFFFF; --ok:#1E9A52; --warn:#B27A12; --bad:#C23B2E;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --radius:10px; color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0D1511; --surface:#15201A; --surface2:#1C2A22; --fg:#EDF3EE; --muted:#93A69A; --line:#26362C;
+    --accent:#3DDC84; --accent-ink:#06210F; --ok:#3DDC84; --warn:#E0A93B; --bad:#FF7466; color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--fg); font-family:var(--font-body); font-size:15px; line-height:1.5;
+  padding-block:20px 56px;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance;line-height:1.2}
+h2{font-size:1.25rem} h3{font-size:1.02rem}
+p{margin:0}
+[hidden]{display:none!important}
+.muted{color:var(--muted)} .small{font-size:.85rem}
+header.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between}
+.logo{font-family:var(--font-display);font-weight:700;font-size:1.9rem;letter-spacing:.01em;line-height:1}
+.logo .ing{color:var(--accent)}
+.tag{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{border:0;background:transparent;font:inherit;font-weight:500;color:var(--muted);padding:10px 14px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.split{display:grid;grid-template-columns:minmax(0,290px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.split{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.plist{display:flex;flex-direction:column;gap:6px}
+.pitem{display:flex;flex-direction:column;gap:2px;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;font:inherit;color:inherit;cursor:pointer}
+.pitem[aria-current="true"]{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.pitem b{font-weight:600}
+.btn{font:inherit;font-weight:600;border-radius:8px;padding:9px 14px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);text-decoration:none;display:inline-block}
+.btn.ghost{background:transparent;color:var(--fg);border-color:var(--line)}
+.btn.sm{padding:5px 10px;font-size:.82rem}
+.btn.danger{background:transparent;color:var(--bad);border-color:var(--line)}
+.btn[disabled]{opacity:.6;cursor:wait}
+form{display:flex;flex-direction:column;gap:10px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--muted);font-weight:500}
+input[type=text],input[type=number],input[type=email],input[type=password],input[type=date],input[type=url],select,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;min-width:0}
+textarea{min-height:76px;resize:vertical}
+label.check{flex-direction:row;align-items:flex-start;gap:8px;color:var(--fg);font-weight:400;font-size:.85rem}
+.pill{display:inline-block;font-size:.76rem;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent);border-color:transparent}
+.pill.mid{color:var(--warn);background:color-mix(in srgb,var(--warn) 16%,transparent);border-color:transparent}
+.pill.hi{color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,transparent);border-color:transparent}
+.ex{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:var(--radius);padding:12px;background:var(--bg)}
+.ex.done{border-color:var(--accent)}
+.dose{font-family:var(--font-display);font-weight:500;font-size:1.02rem}
+.bars{display:flex;align-items:flex-end;gap:6px;height:64px}
+.bar{width:100%;border-radius:4px 4px 0 0;min-height:4px;background:var(--accent)}
+.bar.mid{background:var(--warn)} .bar.hi{background:var(--bad)}
+.barwrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;max-width:38px;justify-content:flex-end;height:100%}
+.barwrap span{font-size:.7rem;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.progress{height:8px;background:var(--surface2);border-radius:999px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);border-radius:999px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips label{flex-direction:row;align-items:center;gap:0;color:var(--fg);font-size:.9rem;position:relative}
+.chips input{position:absolute;opacity:0;pointer-events:none}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;background:var(--bg)}
+.chips input:checked + span{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.chips input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.vid{aspect-ratio:16/9;width:100%;max-width:560px;background:#000;border-radius:8px;overflow:hidden}
+.vid iframe{width:100%;height:100%;border:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:500;z-index:20;max-width:calc(100% - 32px);text-align:center}
+.toast.err{background:var(--bad);color:#fff}
+.empty{border:1px dashed var(--line);border-radius:var(--radius);padding:18px;text-align:center;color:var(--muted)}
+.fb{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:4px}
+.fb:first-child{border-top:0;padding-top:0}
+.dados{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 16px;margin:0}
+.dados dt{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.dados dd{margin:2px 0 0;overflow-wrap:anywhere}
+.dias{display:flex;flex-wrap:wrap;gap:6px}
+.dchip{font:inherit;font-size:.78rem;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:3px 10px;cursor:pointer}
+.dchip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.auth{max-width:420px;margin:24px auto 0;width:100%}
+.code{font-family:var(--font-display);font-size:1.5rem;letter-spacing:.18em;font-weight:700}
+.linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-decoration:underline;align-self:flex-start}
+.loading{text-align:center;color:var(--muted);padding:40px 0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="logo" aria-label="MOVING"><span>mov</span><span class="ing">ING</span></div>
+      <div class="tag">Reabilitação · Fisioterapia · Prevenção</div>
+    </div>
+    <div class="row" id="userbar" hidden>
+      <span class="small muted" id="useremail"></span>
+      <button type="button" class="btn ghost sm" data-action="logout">Sair</button>
+    </div>
+  </header>
+  <main id="app"><div class="loading">Carregando...</div></main>
+</div>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+(function(){
+  var SB_URL="https://wgzjpzjswarygdzkscaq.supabase.co";
+  var SB_KEY="sb_publishable_qtFOTOZJFd5DQQU7oPDN0Q_hQNAF_xU";
+  var sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+  function $(s){return document.querySelector(s)}
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+  function pad(n){return String(n).padStart(2,"0")}
+  function isoOf(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+  function today(){return isoOf(new Date())}
+  function daysAgo(n){var d=new Date();d.setDate(d.getDate()-n);return isoOf(d)}
+  function fmt(iso){var p=String(iso).split("-");return p[2]+"/"+p[1]}
+  function okUrl(u){return /^https?:\/\//i.test(u||"")}
+  function ytId(u){var m=String(u||"").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);return m?m[1]:null}
+
+  var DIAS=["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"];
+  var ABR=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+  var ORDEM=[1,2,3,4,5,6,0];
+  function diasOf(i){return (i&&i.dias&&i.dias.length)?i.dias:[0,1,2,3,4,5,6]}
+  function dose(i){return esc(i.series)+" séries × "+esc(i.reps)}
+
+  function maskCpf(v){v=v.replace(/\D/g,"").slice(0,11);return v.replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2")}
+  function maskCep(v){v=v.replace(/\D/g,"").slice(0,8);return v.replace(/(\d{5})(\d)/,"$1-$2")}
+  function maskTel(v){v=v.replace(/\D/g,"").slice(0,11);if(v.length>10){return v.replace(/(\d{2})(\d{5})(\d{0,4})/,"($1) $2-$3")}if(v.length>6){return v.replace(/(\d{2})(\d{4})(\d{0,4})/,"($1) $2-$3")}if(v.length>2){return v.replace(/(\d{2})(\d+)/,"($1) $2")}return v}
+  function validCpf(s){
+    var d=s.replace(/\D/g,"");
+    if(d.length!==11||/^(\d)\1+$/.test(d)){return false}
+    for(var t=9;t<11;t++){var sum=0;for(var i=0;i<t;i++){sum+=(+d[i])*(t+1-i)}if((sum*10)%11%10!==+d[t]){return false}}
+    return true;
+  }
+
+  var S={user:null,role:null,loading:true,authMode:"login",recovery:false,
+    patients:[],exercises:[],plan:[],feedback:[],feitos:[],me:null,
+    tab:"pacientes",pid:null,novoP:false,editId:null,novoEx:false,editEx:null,confirmDel:null,busy:false,info:""};
+
+  function pat(id){return S.patients.filter(function(p){return p.id===id})[0]}
+  function exo(id){return S.exercises.filter(function(e){return e.id===id})[0]}
+  function planOf(pid){return S.plan.filter(function(i){return i.paciente_id===pid})}
+  function fbOf(pid){return S.feedback.filter(function(f){return f.paciente_id===pid})}
+  function dorClass(n){return n<=3?"ok":n<=6?"mid":"hi"}
+  function dorLabel(n){return n===0?"sem dor":n<=3?"leve":n<=6?"moderada":"intensa"}
+  function dorPill(n){return '<span class="pill '+dorClass(n)+'">Dor '+n+'/10 · '+dorLabel(n)+'</span>'}
+
+  var toastT;
+  function toast(msg,err){var t=$("#toast");t.textContent=msg;t.className="toast"+(err?" err":"");t.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){t.hidden=true},err?5000:2800)}
+  function errMsg(e){
+    var m=(e&&e.message)||String(e||"");
+    if(/Invalid login credentials/i.test(m)){return "E-mail ou senha incorretos."}
+    if(/already registered|already been registered/i.test(m)){return "Este e-mail já tem cadastro. Toque em Entrar."}
+    if(/Email not confirmed/i.test(m)){return "Confirme o seu e-mail pelo link que enviamos e tente entrar de novo."}
+    if(/Password should be at least/i.test(m)){return "A senha precisa ter pelo menos 6 caracteres."}
+    if(/rate limit|too many/i.test(m)){return "Muitas tentativas. Aguarde alguns minutos e tente de novo."}
+    if(/Failed to fetch|NetworkError|Load failed/i.test(m)){return "Sem conexão com o servidor. Verifique a internet."}
+    if(/row-level security|permission denied/i.test(m)){return "Sem permissão para esta ação. Esta conta é de fisioterapeuta?"}
+    return m||"Algo deu errado. Tente de novo.";
+  }
+  function check(r){if(r&&r.error){throw r.error}return r}
+  async function run(fn,okMsg){
+    if(S.busy){return}
+    S.busy=true;
+    try{await fn();if(okMsg){toast(okMsg)}}catch(e){toast(errMsg(e),true)}
+    S.busy=false;
+  }
+
+  /* ---------- Carregamento ---------- */
+  async function loadApp(){
+    S.loading=true;render();
+    try{
+      var r=await sb.rpc("is_fisio");check(r);
+      if(r.data===true){S.role="fisio";await loadFisio()}
+      else{await loadPaciente()}
+    }catch(e){toast(errMsg(e),true);S.role=S.role||"erro"}
+    S.loading=false;render();
+  }
+  async function loadFisio(){
+    var rs=await Promise.all([
+      sb.from("pacientes").select("*").order("nome"),
+      sb.from("exercicios").select("*").order("nome"),
+      sb.from("plano_itens").select("*").order("criado_em"),
+      sb.from("feedbacks").select("*").order("data",{ascending:true}).order("criado_em",{ascending:true}),
+      sb.from("feitos").select("*").gte("data",daysAgo(13))
+    ]);
+    rs.forEach(check);
+    S.patients=rs[0].data||[];S.exercises=rs[1].data||[];S.plan=rs[2].data||[];S.feedback=rs[3].data||[];S.feitos=rs[4].data||[];
+    if(!S.pid||!pat(S.pid)){S.pid=S.patients[0]?S.patients[0].id:null}
+  }
+  async function loadPaciente(){
+    var r=await sb.from("pacientes").select("*").limit(1);check(r);
+    if(!r.data||!r.data.length){S.role="sem-vinculo";S.me=null;return}
+    S.role="paciente";S.me=r.data[0];S.patients=[S.me];
+    var rs=await Promise.all([
+      sb.from("plano_itens").select("*").order("criado_em"),
+      sb.from("exercicios").select("*"),
+      sb.from("feedbacks").select("*").order("data",{ascending:true}).order("criado_em",{ascending:true}),
+      sb.from("feitos").select("*").gte("data",daysAgo(13))
+    ]);
+    rs.forEach(check);
+    S.plan=rs[0].data||[];S.exercises=rs[1].data||[];S.feedback=rs[2].data||[];S.feitos=rs[3].data||[];
+  }
+
+  /* ---------- Blocos reutilizáveis ---------- */
+  function videoBlock(e){
+    if(!e||!e.video_url){return '<span class="small muted">Vídeo ainda não adicionado.</span>'}
+    var id=ytId(e.video_url);
+    if(id){return '<div class="vid"><iframe src="https://www.youtube-nocookie.com/embed/'+id+'" title="'+esc(e.nome)+'" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>'}
+    if(okUrl(e.video_url)){return '<a class="btn ghost sm" style="align-self:flex-start" href="'+esc(e.video_url)+'" target="_blank" rel="noopener noreferrer">Assistir vídeo</a>'}
+    return "";
+  }
+  function setFt(ix){for(var k=0;k<3;k++){var tb=$("#ft-"+k),pn=$("#fp-"+k);if(tb){tb.setAttribute("aria-selected",k===ix)}if(pn){pn.hidden=(k!==ix)}}}
+  function v(p,k){return p&&p[k]?esc(p[k]):""}
+
+  /* ---------- Entrar / criar conta ---------- */
+  function authView(){
+    if(S.recovery){
+      return '<form class="card auth" data-form="newpass"><h2>Criar nova senha</h2>'
+        +'<label>Nova senha<input type="password" id="au-new" minlength="6" autocomplete="new-password"></label>'
+        +'<button class="btn" type="submit">Salvar nova senha</button></form>';
+    }
+    var login=S.authMode==="login";
+    return '<div class="card auth"><div class="tabs" role="tablist">'
+      +'<button type="button" role="tab" aria-selected="'+login+'" data-action="authmode" data-m="login">Entrar</button>'
+      +'<button type="button" role="tab" aria-selected="'+!login+'" data-action="authmode" data-m="signup">Criar conta</button></div>'
+      +'<form data-form="auth"><label>E-mail<input type="email" id="au-email" autocomplete="email" inputmode="email"></label>'
+      +'<label>Senha<input type="password" id="au-pass" autocomplete="'+(login?"current-password":"new-password")+'"></label>'
+      +(login?'':'<p class="small muted">Se você é paciente, crie a conta com o seu e-mail e, no passo seguinte, digite o código de convite que a MOVING enviou.</p>')
+      +'<button class="btn" type="submit">'+(login?"Entrar":"Criar conta")+'</button></form>'
+      +(login?'<button type="button" class="linkbtn small" data-action="forgot">Esqueci a minha senha</button>':'')
+      +(S.info?'<p class="small" role="status">'+esc(S.info)+'</p>':'')+'</div>';
+  }
+
+  /* ---------- Conta sem vínculo (paciente sem convite ou fisio ainda não habilitada) ---------- */
+  function semVinculoView(){
+    var email=S.user?S.user.email:"";
+    var sql="insert into public.fisios (user_id) select id from auth.users where email = '"+String(email).replace(/'/g,"''")+"';";
+    return '<form class="card auth" data-form="convite"><h2>Código de convite</h2>'
+      +'<p class="muted">Digite o código que a MOVING enviou para você. Ele libera o seu plano de tratamento.</p>'
+      +'<label>Código<input type="text" id="cv-code" maxlength="12" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase;letter-spacing:.14em"></label>'
+      +'<button class="btn" type="submit">Entrar no meu plano</button></form>'
+      +'<div class="card auth"><h3>Você é a fisioterapeuta?</h3>'
+      +'<p class="small muted">Esta conta ainda não está habilitada como fisioterapeuta. No SQL Editor do Supabase, rode o comando abaixo uma única vez e depois toque em "Atualizar".</p>'
+      +'<textarea readonly id="sqlfisio" rows="4">'+esc(sql)+'</textarea>'
+      +'<div class="row"><button type="button" class="btn ghost sm" data-action="copy" data-from="sqlfisio">Copiar comando</button>'
+      +'<button type="button" class="btn sm" data-action="reload">Atualizar</button></div></div>';
+  }
+
+  /* ---------- Fisioterapeuta ---------- */
+  function fisioView(){
+    var tabs=[["pacientes","Pacientes"],["exercicios","Exercícios"],["feedbacks","Feedbacks"]];
+    var h='<div class="stack"><div class="tabs" role="tablist">';
+    tabs.forEach(function(t){h+='<button type="button" role="tab" aria-selected="'+(S.tab===t[0])+'" data-action="tab" data-tab="'+t[0]+'">'+t[1]+'</button>'});
+    h+='</div>';
+    h+=S.tab==="pacientes"?pacientesTab():S.tab==="exercicios"?exerciciosTab():feedbacksTab();
+    return h+'</div>';
+  }
+
+  function formPaciente(p){
+    var ed=!!p;
+    return '<form class="card" data-form="paciente" novalidate><div class="row"><h2>'+(ed?"Editar dados de "+esc(p.nome):"Cadastrar paciente")+'</h2><button type="button" class="btn ghost sm" data-action="cancelP">Cancelar</button></div>'
+      +'<div class="tabs" role="tablist">'+["Dados pessoais","Contato e endereço","Nota fiscal"].map(function(t,ix){return '<button type="button" role="tab" id="ft-'+ix+'" aria-selected="'+(ix===0)+'" data-action="ftab" data-t="'+ix+'">'+t+'</button>'}).join("")+'</div>'
+      +'<div id="fp-0" class="stack"><div class="fields">'
+      +'<label>Nome completo<input type="text" id="np-nome" value="'+v(p,"nome")+'" autocomplete="off"></label>'
+      +'<label>CPF<input type="text" id="np-cpf" inputmode="numeric" placeholder="000.000.000-00" value="'+v(p,"cpf")+'" autocomplete="off"></label>'
+      +'<label>Data de nascimento<input type="date" id="np-nasc" value="'+v(p,"nascimento")+'"></label></div>'
+      +'<label>Objetivo do tratamento<input type="text" id="np-obj" placeholder="Ex.: voltar a correr sem dor" value="'+v(p,"objetivo")+'"></label>'
+      +'<label class="check"><input type="checkbox" id="np-consent"'+(ed&&p.consentimento?" checked":"")+'><span>O paciente autorizou o uso dos seus dados pessoais e de saúde para o acompanhamento e a emissão de nota fiscal (LGPD).</span></label></div>'
+      +'<div id="fp-1" class="stack" hidden><div class="fields">'
+      +'<label>Telefone / WhatsApp<input type="text" id="np-tel" inputmode="tel" placeholder="(00) 00000-0000" value="'+v(p,"telefone")+'"></label>'
+      +'<label>E-mail<input type="email" id="np-email" placeholder="nome@email.com" value="'+v(p,"email")+'" autocomplete="off"></label>'
+      +'<label>CEP<input type="text" id="np-cep" inputmode="numeric" placeholder="00000-000" value="'+v(p,"cep")+'"></label>'
+      +'<label>Rua<input type="text" id="np-rua" value="'+v(p,"rua")+'"></label>'
+      +'<label>Número<input type="text" id="np-num" value="'+v(p,"numero")+'"></label>'
+      +'<label>Complemento<input type="text" id="np-compl" value="'+v(p,"complemento")+'"></label>'
+      +'<label>Bairro<input type="text" id="np-bairro" value="'+v(p,"bairro")+'"></label>'
+      +'<label>Cidade<input type="text" id="np-cidade" value="'+v(p,"cidade")+'"></label>'
+      +'<label>UF<input type="text" id="np-uf" maxlength="2" placeholder="SE" value="'+v(p,"uf")+'"></label></div></div>'
+      +'<div id="fp-2" class="stack" hidden><p class="small muted">Por padrão a nota sai no nome do paciente, com o CPF e o endereço do cadastro. Preencha abaixo só se a nota for em nome de outra pessoa ou empresa.</p><div class="fields">'
+      +'<label>Nome ou razão social na nota<input type="text" id="np-nfnome" value="'+v(p,"nf_nome")+'"></label>'
+      +'<label>CPF ou CNPJ na nota<input type="text" id="np-nfdoc" value="'+v(p,"nf_doc")+'"></label>'
+      +'<label>E-mail para enviar a nota<input type="email" id="np-nfemail" value="'+v(p,"nf_email")+'"></label></div></div>'
+      +'<button class="btn" type="submit" style="align-self:flex-start">'+(ed?"Salvar alterações":"Salvar paciente")+'</button></form>';
+  }
+
+  function dadosCadastrais(p){
+    function it(l,val){return '<div><dt>'+l+'</dt><dd>'+(val?esc(val):'<span class="muted">não informado</span>')+'</dd></div>'}
+    var end=[p.rua&&(p.rua+(p.numero?", "+p.numero:"")),p.complemento,p.bairro,[p.cidade,p.uf].filter(Boolean).join("/"),p.cep].filter(Boolean).join(" · ");
+    var nasc=p.nascimento?String(p.nascimento).split("-").reverse().join("/"):"";
+    return '<dl class="dados">'+it("CPF",p.cpf)+it("Nascimento",nasc)+it("Telefone",p.telefone)+it("E-mail",p.email)+it("Endereço",end)
+      +it("Nota fiscal em nome de",p.nf_nome?(p.nf_nome+(p.nf_doc?" · "+p.nf_doc:"")):"o próprio paciente")+(p.nf_email?it("E-mail para enviar a nota",p.nf_email):"")+'</dl>';
+  }
+
+  function pacientesTab(){
+    var h='<div class="split"><div class="stack"><div class="row"><h2>Pacientes</h2><button type="button" class="btn sm" data-action="novoP">'+(S.novoP&&!S.editId?"Fechar":"Novo paciente")+'</button></div><div class="plist">';
+    S.patients.forEach(function(p){
+      var f=fbOf(p.id),last=f[f.length-1];
+      h+='<button type="button" class="pitem" data-action="selp" data-id="'+p.id+'" aria-current="'+(S.pid===p.id)+'"><b>'+esc(p.nome)+'</b><span class="small muted">'
+        +(last?"Último feedback "+fmt(last.data)+" · dor "+last.dor+"/10":"Sem feedback ainda")+'</span></button>';
+    });
+    if(!S.patients.length){h+='<div class="empty">Nenhum paciente cadastrado ainda. Toque em "Novo paciente".</div>'}
+    h+='</div></div><div class="stack">'+(S.novoP?formPaciente(S.editId?pat(S.editId):null):pacienteDetalhe())+'</div></div>';
+    return h;
+  }
+
+  function conviteCard(p){
+    var site=location.origin+location.pathname;
+    var primeiro=String(p.nome||"").split(" ")[0];
+    var msg="Olá, "+primeiro+"! O seu acesso à MOVING está pronto.\n1) Abra: "+site+"\n2) Toque em \"Criar conta\" e use o seu e-mail.\n3) Digite o código de convite: "+p.convite;
+    var tel=String(p.telefone||"").replace(/\D/g,"");
+    if(tel&&tel.length<=11){tel="55"+tel}
+    var wa="https://wa.me/"+tel+"?text="+encodeURIComponent(msg);
+    var acesso=p.user_id?'<span class="pill ok">Paciente já tem acesso</span>':'<span class="pill mid">Ainda não entrou</span>';
+    return '<div class="card"><div class="row"><h3>Convite de acesso</h3>'+acesso+'</div>'
+      +(p.user_id?'<p class="small muted">O paciente já criou a conta e vê o próprio plano.</p>'
+        :'<p class="small muted">Envie o código abaixo ao paciente. Ele cria a conta com o e-mail dele e digita o código.</p>'
+         +'<div class="code" aria-label="Código de convite">'+esc(p.convite)+'</div>'
+         +'<textarea readonly id="msgconvite" rows="5">'+esc(msg)+'</textarea>'
+         +'<div class="row" style="justify-content:flex-start"><button type="button" class="btn ghost sm" data-action="copy" data-from="msgconvite">Copiar mensagem</button>'
+         +'<a class="btn sm" href="'+esc(wa)+'" target="_blank" rel="noopener noreferrer">Enviar pelo WhatsApp</a></div>')
+      +'</div>';
+  }
+
+  function pacienteDetalhe(){
+    var p=pat(S.pid);
+    if(!p){return '<div class="empty">Cadastre ou selecione um paciente para montar o plano de tratamento.</div>'}
+    var plan=planOf(p.id),f=fbOf(p.id);
+    var h='<div class="card"><div class="row"><div><h2>'+esc(p.nome)+'</h2><p class="muted small">'+esc(p.objetivo||"Objetivo não informado")+'</p></div>'
+      +'<div class="row">'+(p.consentimento?'<span class="pill ok">Consentimento LGPD registrado</span>':'<span class="pill hi">Sem consentimento</span>')
+      +'<button type="button" class="btn ghost sm" data-action="editP">Editar dados</button></div></div>'+dadosCadastrais(p)
+      +'<div class="row" style="justify-content:flex-start">'
+      +(S.confirmDel===p.id?'<span class="small">Excluir este paciente e todo o histórico dele?</span><button type="button" class="btn danger sm" data-action="delP2">Sim, excluir</button><button type="button" class="btn ghost sm" data-action="delP0">Não</button>'
+        :'<button type="button" class="btn danger sm" data-action="delP1">Excluir paciente</button>')+'</div></div>';
+    h+=conviteCard(p);
+    h+='<div class="card"><div class="row"><h3>Plano de tratamento</h3><span class="small muted">'+plan.length+' exercício'+(plan.length===1?"":"s")+'</span></div>';
+    if(!plan.length){h+='<div class="empty">O plano está vazio. Adicione o primeiro exercício abaixo.</div>'}
+    else{h+='<p class="small muted">Os exercícios aparecem agrupados por dia da semana. Toque nos dias de cada exercício para mudar quando ele deve ser feito.</p>'}
+    ORDEM.forEach(function(d){
+      var itens=plan.filter(function(i){return diasOf(i).indexOf(d)>-1});
+      if(!itens.length){return}
+      h+='<h3 style="margin-top:6px">'+DIAS[d]+'</h3>';
+      itens.forEach(function(i){
+        var e=exo(i.exercicio_id); if(!e){return}
+        h+='<div class="ex"><div class="row"><b>'+esc(e.nome)+'</b><span class="pill">'+esc(e.regiao||"")+'</span></div>'
+          +'<div class="dose">'+dose(i)+'</div>'+(i.obs?'<p class="small muted">'+esc(i.obs)+'</p>':'')
+          +'<div class="dias" role="group" aria-label="Dias deste exercício">'
+          +ORDEM.map(function(x){return '<button type="button" class="dchip" data-action="toggledia" data-id="'+i.id+'" data-dia="'+x+'" aria-pressed="'+(diasOf(i).indexOf(x)>-1)+'">'+ABR[x]+'</button>'}).join("")+'</div>'
+          +'<div class="row">'+videoBlock(e)+'<button type="button" class="btn danger sm" data-action="rmplan" data-id="'+i.id+'">Remover do plano</button></div></div>';
+      });
+    });
+    if(!S.exercises.length){h+='<div class="empty">Cadastre exercícios na aba "Exercícios" para montar o plano.</div>'}
+    else{
+      h+='<form data-form="addplan"><h3>Adicionar exercício ao plano</h3><div class="fields">'
+        +'<label>Exercício<select id="ap-ex">'+S.exercises.map(function(e){return '<option value="'+e.id+'">'+esc(e.nome)+'</option>'}).join("")+'</select></label>'
+        +'<label>Séries<input type="number" id="ap-series" min="1" max="10" value="3"></label>'
+        +'<label>Repetições ou tempo<input type="text" id="ap-reps" value="12"></label></div>'
+        +'<div><span class="small muted" style="font-weight:500">Dias da semana em que o paciente faz este exercício</span><div class="chips" role="group" aria-label="Dias da semana" style="margin-top:6px">'
+        +ORDEM.map(function(d){return '<label><input type="checkbox" name="apdia" value="'+d+'"><span>'+ABR[d]+'</span></label>'}).join("")+'</div></div>'
+        +'<label>Observações para o paciente<input type="text" id="ap-obs" placeholder="Ex.: pare se a dor passar de 5"></label>'
+        +'<button class="btn" type="submit" style="align-self:flex-start">Adicionar ao plano</button></form>';
+    }
+    h+='</div>';
+    var fe=S.feitos.filter(function(x){return x.paciente_id===p.id&&x.data>=daysAgo(6)}).length;
+    h+='<div class="card"><h3>Acompanhamento</h3><p class="small muted">Exercícios marcados como feitos nos últimos 7 dias: <b style="color:var(--fg)">'+fe+'</b></p>';
+    if(!f.length){h+='<div class="empty">Quando o paciente enviar feedback, a evolução da dor aparece aqui.</div>'}
+    else{
+      h+='<div class="bars" role="img" aria-label="Dor informada pelo paciente ao longo do tempo">';
+      f.slice(-8).forEach(function(x){h+='<div class="barwrap"><div class="bar '+(dorClass(x.dor)==="ok"?"":dorClass(x.dor))+'" style="height:'+Math.max(6,x.dor*10)+'%"></div><span>'+x.dor+'</span></div>'});
+      h+='</div><div class="stack">';
+      f.slice().reverse().slice(0,3).forEach(function(x){
+        h+='<div class="fb"><div class="row"><b>'+fmt(x.data)+' · '+esc(x.sentiu)+'</b>'+dorPill(x.dor)+'</div>'+(x.texto?'<p class="small">'+esc(x.texto)+'</p>':'')+'</div>';
+      });
+      h+='</div>';
+    }
+    return h+'</div>';
+  }
+
+  function formExercicio(e){
+    var regs=["Joelho","Quadril","Tornozelo e pé","Coluna e core","Ombro","Cervical","Outra"];
+    return '<form class="card" data-form="exercicio"><div class="row"><h3>'+(e?"Editar exercício":"Novo exercício")+'</h3>'+(e?'<button type="button" class="btn ghost sm" data-action="cancelEx">Cancelar</button>':'')+'</div>'
+      +'<label>Nome<input type="text" id="ne-nome" value="'+v(e,"nome")+'"></label>'
+      +'<label>Região<select id="ne-reg">'+regs.map(function(r){return '<option'+(e&&e.regiao===r?" selected":"")+'>'+r+'</option>'}).join("")+'</select></label>'
+      +'<label>Como executar<textarea id="ne-instr">'+v(e,"instrucoes")+'</textarea></label>'
+      +'<label>Link do vídeo (YouTube não listado)<input type="url" id="ne-link" placeholder="https://" value="'+v(e,"video_url")+'"></label>'
+      +'<button class="btn" type="submit">'+(e?"Salvar alterações":"Salvar exercício")+'</button></form>';
+  }
+
+  function exerciciosTab(){
+    var h='<div class="split">'+formExercicio(S.editEx?exo(S.editEx):null);
+    h+='<div class="stack"><div class="row"><h2>Biblioteca de exercícios</h2><span class="small muted">'+S.exercises.length+' cadastrados</span></div>';
+    if(!S.exercises.length){h+='<div class="empty">Nenhum exercício ainda. Cadastre o primeiro ao lado.</div>'}
+    h+='<div class="grid2">';
+    S.exercises.forEach(function(e){
+      h+='<div class="card"><div class="row"><b>'+esc(e.nome)+'</b><span class="pill">'+esc(e.regiao||"")+'</span></div>'
+        +(e.instrucoes?'<p class="small muted">'+esc(e.instrucoes)+'</p>':'')+videoBlock(e)
+        +'<div class="row" style="justify-content:flex-start"><button type="button" class="btn ghost sm" data-action="editEx" data-id="'+e.id+'">Editar</button>'
+        +(S.confirmDel==="ex:"+e.id?'<button type="button" class="btn danger sm" data-action="delEx2" data-id="'+e.id+'">Confirmar exclusão</button><button type="button" class="btn ghost sm" data-action="delEx0">Não</button>'
+          :'<button type="button" class="btn danger sm" data-action="delEx1" data-id="'+e.id+'">Excluir</button>')+'</div>'
+        +(S.confirmDel==="ex:"+e.id?'<p class="small muted">Excluir também remove este exercício dos planos dos pacientes.</p>':'')+'</div>';
+    });
+    return h+'</div></div></div>';
+  }
+
+  function feedbacksTab(){
+    var all=S.feedback.slice().reverse();
+    var h='<div class="stack"><h2>Feedbacks dos pacientes</h2>';
+    if(!all.length){return h+'<div class="empty">Nenhum feedback recebido ainda.</div></div>'}
+    h+='<div class="card">';
+    all.forEach(function(x){
+      var p=pat(x.paciente_id);
+      h+='<div class="fb"><div class="row"><b>'+esc(p?p.nome:"Paciente")+' · '+fmt(x.data)+'</b>'+dorPill(x.dor)+'</div>'
+        +'<p class="small muted">Sentiu-se: '+esc(x.sentiu)+'</p>'+(x.texto?'<p class="small">'+esc(x.texto)+'</p>':'')+'</div>';
+    });
+    return h+'</div></div>';
+  }
+
+  /* ---------- Paciente ---------- */
+  function pacienteView(){
+    var p=S.me,plan=S.plan,hoje=new Date().getDay();
+    var feitosHoje=S.feitos.filter(function(x){return x.data===today()}).map(function(x){return x.exercicio_id});
+    var planoHoje=plan.filter(function(i){return diasOf(i).indexOf(hoje)>-1});
+    var total=planoHoje.length,n=planoHoje.filter(function(i){return feitosHoje.indexOf(i.exercicio_id)>-1}).length;
+    var h='<div class="stack"><div class="card"><h2>Olá, '+esc(String(p.nome).split(" ")[0])+'</h2><p class="muted">Seu objetivo: '+esc(p.objetivo||"definido com a sua fisioterapeuta")+'</p>'
+      +'<div class="row small"><span>'+(total?"Hoje: "+n+" de "+total+" exercícios feitos":"Hoje não há exercícios no seu plano.")+'</span></div>'
+      +'<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+n+'"><i style="width:'+(total?Math.round(n/total*100):0)+'%"></i></div></div>';
+    h+='<h2>Hoje · '+DIAS[hoje]+'</h2>';
+    if(!plan.length){h+='<div class="empty">Sua fisioterapeuta ainda não montou o seu plano.</div>'}
+    else if(!planoHoje.length){h+='<div class="empty">Dia de descanso: nenhum exercício para hoje.</div>'}
+    planoHoje.forEach(function(i){
+      var e=exo(i.exercicio_id); if(!e){return}
+      var d=feitosHoje.indexOf(e.id)>-1;
+      h+='<div class="card ex'+(d?" done":"")+'"><div class="row"><b>'+esc(e.nome)+'</b></div>'
+        +'<div class="dose">'+dose(i)+'</div>'
+        +(e.instrucoes?'<p class="small muted">'+esc(e.instrucoes)+'</p>':'')
+        +(i.obs?'<p class="small"><b>Atenção:</b> '+esc(i.obs)+'</p>':'')
+        +videoBlock(e)
+        +'<label class="check"><input type="checkbox" data-action="toggle" data-eid="'+e.id+'"'+(d?" checked":"")+'><span>Fiz este exercício hoje</span></label></div>';
+    });
+    var prox=[];
+    for(var s=1;s<=6;s++){
+      var dia=(hoje+s)%7,its=plan.filter(function(i){return diasOf(i).indexOf(dia)>-1});
+      if(its.length){prox.push([dia,its])}
+    }
+    if(prox.length){
+      h+='<h2>Próximos dias</h2>';
+      prox.forEach(function(g){
+        h+='<div class="card"><h3>'+DIAS[g[0]]+'</h3>';
+        g[1].forEach(function(i){
+          var e=exo(i.exercicio_id); if(!e){return}
+          h+='<div class="ex"><div class="row"><b>'+esc(e.nome)+'</b><span class="pill">'+dose(i)+'</span></div>'+(i.obs?'<p class="small muted">'+esc(i.obs)+'</p>':'')+videoBlock(e)+'</div>';
+        });
+        h+='</div>';
+      });
+    }
+    h+='<form class="card" data-form="feedback"><h2>Como você está?</h2><p class="muted small">Conte como se sentiu depois dos exercícios de hoje.</p>'
+      +'<label>Dor agora: <b id="dorv" style="color:var(--fg)">3/10</b><input type="range" id="fb-dor" min="0" max="10" value="3" aria-label="Nível de dor de 0 a 10"></label>'
+      +'<div class="chips" role="radiogroup" aria-label="Como você se sentiu">'
+      +["Muito bem","Bem","Regular","Mal"].map(function(x,ix){return '<label><input type="radio" name="sentiu" value="'+x+'"'+(ix===1?" checked":"")+'><span>'+x+'</span></label>'}).join("")+'</div>'
+      +'<label>Quer contar mais alguma coisa?<textarea id="fb-texto" placeholder="Ex.: senti o joelho no agachamento"></textarea></label>'
+      +'<button class="btn" type="submit" style="align-self:flex-start">Enviar feedback</button></form>';
+    var f=fbOf(p.id).slice().reverse();
+    if(f.length){
+      h+='<div class="card"><h3>Meus feedbacks anteriores</h3>';
+      f.slice(0,5).forEach(function(x){h+='<div class="fb"><div class="row"><b>'+fmt(x.data)+' · '+esc(x.sentiu)+'</b>'+dorPill(x.dor)+'</div>'+(x.texto?'<p class="small">'+esc(x.texto)+'</p>':'')+'</div>'});
+      h+='</div>';
+    }
+    return h+'</div>';
+  }
+
+  function render(){
+    var logged=!!S.user;
+    $("#userbar").hidden=!logged;
+    $("#useremail").textContent=logged?S.user.email:"";
+    var html;
+    if(S.recovery||!logged){html=authView()}
+    else if(S.loading){html='<div class="loading">Carregando...</div>'}
+    else if(S.role==="fisio"){html=fisioView()}
+    else if(S.role==="paciente"){html=pacienteView()}
+    else if(S.role==="sem-vinculo"){html=semVinculoView()}
+    else{html='<div class="card auth"><h2>Não foi possível carregar</h2><p class="muted">Verifique a conexão e tente de novo.</p><button type="button" class="btn" data-action="reload">Tentar de novo</button></div>'}
+    $("#app").innerHTML=html;
+  }
+
+  /* ---------- Cliques ---------- */
+  document.addEventListener("click",function(ev){
+    var t=ev.target.closest("[data-action]"); if(!t){return}
+    var a=t.getAttribute("data-action");
+    if(a==="authmode"){S.authMode=t.getAttribute("data-m");S.info="";render()}
+    else if(a==="logout"){run(async function(){await sb.auth.signOut()})}
+    else if(a==="reload"){loadApp()}
+    else if(a==="forgot"){
+      var em=($("#au-email")||{}).value;
+      if(!em||!em.trim()){toast("Digite o seu e-mail acima e toque de novo em \"Esqueci a minha senha\".",true);return}
+      run(async function(){check(await sb.auth.resetPasswordForEmail(em.trim(),{redirectTo:location.origin+location.pathname}));S.info="Se o e-mail tiver cadastro, enviamos um link para criar uma nova senha.";render()});
+    }
+    else if(a==="copy"){
+      var el=document.getElementById(t.getAttribute("data-from"));
+      if(!el){return}
+      var txt=el.value;
+      function sel(){el.focus();el.select();el.setSelectionRange(0,txt.length);toast("Texto selecionado. Toque em Copiar no menu do tablet.")}
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){toast("Copiado")},sel)}else{sel()}
+    }
+    else if(a==="tab"){S.tab=t.getAttribute("data-tab");S.confirmDel=null;render()}
+    else if(a==="selp"){S.pid=t.getAttribute("data-id");S.novoP=false;S.editId=null;S.confirmDel=null;render()}
+    else if(a==="novoP"){if(S.novoP&&!S.editId){S.novoP=false}else{S.novoP=true;S.editId=null}render()}
+    else if(a==="editP"){S.novoP=true;S.editId=S.pid;render()}
+    else if(a==="cancelP"){S.novoP=false;S.editId=null;render()}
+    else if(a==="ftab"){setFt(+t.getAttribute("data-t"))}
+    else if(a==="delP1"){S.confirmDel=S.pid;render()}
+    else if(a==="delP0"){S.confirmDel=null;render()}
+    else if(a==="delP2"){
+      var pid=S.pid;
+      run(async function(){
+        check(await sb.from("pacientes").delete().eq("id",pid));
+        S.patients=S.patients.filter(function(p){return p.id!==pid});
+        S.plan=S.plan.filter(function(i){return i.paciente_id!==pid});
+        S.feedback=S.feedback.filter(function(x){return x.paciente_id!==pid});
+        S.feitos=S.feitos.filter(function(x){return x.paciente_id!==pid});
+        S.pid=S.patients[0]?S.patients[0].id:null;S.confirmDel=null;render();
+      },"Paciente excluído");
+    }
+    else if(a==="rmplan"){
+      var rid=t.getAttribute("data-id");
+      run(async function(){check(await sb.from("plano_itens").delete().eq("id",rid));S.plan=S.plan.filter(function(i){return i.id!==rid});render()},"Exercício removido do plano");
+    }
+    else if(a==="toggledia"){
+      var it=S.plan.filter(function(i){return i.id===t.getAttribute("data-id")})[0]; if(!it){return}
+      var dd=+t.getAttribute("data-dia"),cur=diasOf(it).slice(),ix=cur.indexOf(dd);
+      if(ix>-1){if(cur.length===1){toast("Deixe ao menos um dia marcado",true);return}cur.splice(ix,1)}else{cur.push(dd)}
+      cur.sort(function(x,y){return x-y});
+      run(async function(){check(await sb.from("plano_itens").update({dias:cur}).eq("id",it.id));it.dias=cur;render()});
+    }
+    else if(a==="editEx"){S.editEx=t.getAttribute("data-id");render();window.scrollTo(0,0)}
+    else if(a==="cancelEx"){S.editEx=null;render()}
+    else if(a==="delEx1"){S.confirmDel="ex:"+t.getAttribute("data-id");render()}
+    else if(a==="delEx0"){S.confirmDel=null;render()}
+    else if(a==="delEx2"){
+      var xid=t.getAttribute("data-id");
+      run(async function(){
+        check(await sb.from("exercicios").delete().eq("id",xid));
+        S.exercises=S.exercises.filter(function(e){return e.id!==xid});
+        S.plan=S.plan.filter(function(i){return i.exercicio_id!==xid});
+        S.confirmDel=null;render();
+      },"Exercício excluído");
+    }
+    else if(a==="toggle"){
+      var eid=t.getAttribute("data-eid"),marcar=t.checked,pidMe=S.me.id;
+      run(async function(){
+        if(marcar){
+          var ri=await sb.from("feitos").insert({paciente_id:pidMe,exercicio_id:eid,data:today()});
+          if(ri.error&&ri.error.code!=="23505"){throw ri.error}
+          S.feitos.push({paciente_id:pidMe,exercicio_id:eid,data:today()});
+        }else{
+          check(await sb.from("feitos").delete().eq("paciente_id",pidMe).eq("exercicio_id",eid).eq("data",today()));
+          S.feitos=S.feitos.filter(function(x){return !(x.exercicio_id===eid&&x.data===today())});
+        }
+        render();
+      });
+    }
+  });
+
+  document.addEventListener("input",function(ev){
+    var id=ev.target.id;
+    if(id==="fb-dor"){$("#dorv").textContent=ev.target.value+"/10"}
+    else if(id==="np-cpf"){ev.target.value=maskCpf(ev.target.value)}
+    else if(id==="np-cep"){ev.target.value=maskCep(ev.target.value)}
+    else if(id==="np-tel"){ev.target.value=maskTel(ev.target.value)}
+    else if(id==="cv-code"){ev.target.value=ev.target.value.toUpperCase()}
+  });
+
+  /* ---------- Formulários ---------- */
+  document.addEventListener("submit",function(ev){
+    var f=ev.target.getAttribute("data-form"); if(!f){return}
+    ev.preventDefault();
+
+    if(f==="auth"){
+      var email=$("#au-email").value.trim(),pass=$("#au-pass").value;
+      if(!email||!pass){toast("Preencha o e-mail e a senha.",true);return}
+      run(async function(){
+        if(S.authMode==="login"){check(await sb.auth.signInWithPassword({email:email,password:pass}))}
+        else{
+          if(pass.length<6){throw new Error("Password should be at least 6 characters")}
+          var r=check(await sb.auth.signUp({email:email,password:pass,options:{emailRedirectTo:location.origin+location.pathname}}));
+          if(!r.data.session){S.info="Conta criada. Enviamos um e-mail de confirmação: toque no link dele e depois volte aqui para entrar.";S.authMode="login";render()}
+        }
+      });
+    }
+    else if(f==="newpass"){
+      var np=$("#au-new").value;
+      if(np.length<6){toast("A senha precisa ter pelo menos 6 caracteres.",true);return}
+      run(async function(){check(await sb.auth.updateUser({password:np}));S.recovery=false;await loadApp()},"Senha alterada");
+    }
+    else if(f==="convite"){
+      var code=$("#cv-code").value.trim();
+      if(!code){toast("Digite o código de convite.",true);return}
+      run(async function(){check(await sb.rpc("vincular_convite",{codigo:code}));await loadApp()},"Acesso liberado");
+    }
+    else if(f==="paciente"){
+      var nome=$("#np-nome").value.trim();
+      if(!nome){setFt(0);toast("Informe o nome do paciente",true);return}
+      if(!$("#np-consent").checked){setFt(0);toast("Confirme o consentimento do paciente (LGPD)",true);return}
+      var cpf=$("#np-cpf").value.trim();
+      if(cpf&&!validCpf(cpf)){setFt(0);toast("CPF inválido. Confira os números.",true);return}
+      var dados={nome:nome,cpf:cpf||null,nascimento:$("#np-nasc").value||null,objetivo:$("#np-obj").value.trim()||null,
+        telefone:$("#np-tel").value.trim()||null,email:$("#np-email").value.trim()||null,cep:$("#np-cep").value.trim()||null,
+        rua:$("#np-rua").value.trim()||null,numero:$("#np-num").value.trim()||null,complemento:$("#np-compl").value.trim()||null,
+        bairro:$("#np-bairro").value.trim()||null,cidade:$("#np-cidade").value.trim()||null,uf:($("#np-uf").value.trim().toUpperCase()||null),
+        nf_nome:$("#np-nfnome").value.trim()||null,nf_doc:$("#np-nfdoc").value.trim()||null,nf_email:$("#np-nfemail").value.trim()||null,consentimento:true};
+      var edId=S.editId;
+      run(async function(){
+        if(edId){
+          var r=check(await sb.from("pacientes").update(dados).eq("id",edId).select().single());
+          S.patients=S.patients.map(function(p){return p.id===edId?r.data:p});
+        }else{
+          dados.consentimento_em=new Date().toISOString();
+          var r2=check(await sb.from("pacientes").insert(dados).select().single());
+          S.patients.push(r2.data);
+          S.patients.sort(function(a,b){return a.nome.localeCompare(b.nome,"pt-BR")});
+          S.pid=r2.data.id;
+        }
+        S.novoP=false;S.editId=null;render();
+      },edId?"Dados atualizados":"Paciente cadastrado. Envie o código de convite a ele.");
+    }
+    else if(f==="addplan"){
+      var exId=$("#ap-ex").value;
+      var dias=[].slice.call(document.querySelectorAll('input[name="apdia"]:checked')).map(function(x){return +x.value});
+      if(!dias.length){toast("Escolha ao menos um dia da semana",true);return}
+      var series=parseInt($("#ap-series").value,10),reps=$("#ap-reps").value.trim();
+      if(!series||series<1||!reps){toast("Informe as séries e as repetições",true);return}
+      var row={paciente_id:S.pid,exercicio_id:exId,series:series,reps:reps,dias:dias,obs:$("#ap-obs").value.trim()||null};
+      run(async function(){var r=check(await sb.from("plano_itens").insert(row).select().single());S.plan.push(r.data);render()},"Exercício adicionado ao plano");
+    }
+    else if(f==="exercicio"){
+      var nm=$("#ne-nome").value.trim();
+      if(!nm){toast("Informe o nome do exercício",true);return}
+      var link=$("#ne-link").value.trim();
+      if(link&&!okUrl(link)){toast("O link do vídeo deve começar com https://",true);return}
+      var ex={nome:nm,regiao:$("#ne-reg").value,instrucoes:$("#ne-instr").value.trim()||null,video_url:link||null};
+      var eId=S.editEx;
+      run(async function(){
+        if(eId){var r=check(await sb.from("exercicios").update(ex).eq("id",eId).select().single());S.exercises=S.exercises.map(function(e){return e.id===eId?r.data:e})}
+        else{var r2=check(await sb.from("exercicios").insert(ex).select().single());S.exercises.push(r2.data)}
+        S.exercises.sort(function(a,b){return a.nome.localeCompare(b.nome,"pt-BR")});
+        S.editEx=null;render();
+      },eId?"Exercício atualizado":"Exercício salvo");
+    }
+    else if(f==="feedback"){
+      var sel=document.querySelector('input[name="sentiu"]:checked');
+      var fb={paciente_id:S.me.id,data:today(),dor:+$("#fb-dor").value,sentiu:sel?sel.value:"Bem",texto:$("#fb-texto").value.trim()||null};
+      run(async function(){
+        var r=check(await sb.from("feedbacks").insert(fb));
+        S.feedback.push({id:"novo"+Date.now(),paciente_id:fb.paciente_id,data:fb.data,dor:fb.dor,sentiu:fb.sentiu,texto:fb.texto});
+        render();
+      },"Feedback enviado. Obrigado!");
+    }
+  });
+
+  /* ---------- Início ---------- */
+  sb.auth.onAuthStateChange(function(event,session){
+    if(event==="PASSWORD_RECOVERY"){S.user=session?session.user:null;S.recovery=true;S.loading=false;render();return}
+    if(event==="SIGNED_OUT"){S.user=null;S.role=null;S.patients=[];S.plan=[];S.feedback=[];S.feitos=[];S.me=null;S.pid=null;S.recovery=false;S.loading=false;render();return}
+    if((event==="SIGNED_IN"||event==="INITIAL_SESSION")&&session){
+      var novo=!S.user||S.user.id!==session.user.id;
+      S.user=session.user;
+      if(novo&&!S.recovery){setTimeout(loadApp,0)}
+    }
+    if(event==="INITIAL_SESSION"&&!session){S.user=null;S.loading=false;render()}
+  });
+})();
+</script>
+</body>
+</html>
